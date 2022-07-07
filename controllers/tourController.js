@@ -1,12 +1,26 @@
-const fs = require('fs');
 const Tour = require('./../models/tourModel');
+const APIFeatures = require('./../utils/apiFeatures');
+
+exports.aliasTopTours = (req, res, next) => {
+   req.query.limit = '5';
+   req.query.sort = 'ratingsAverage,price';
+   req.query.fields = 'name,price,ratingsAverage,summary,difficulty';
+   next();
+}
+
 
 
 exports.getAllTours = async (req, res) => {
     
    try {
-      const tours = await Tour.find();  
-       
+      console.log(req.query);
+     
+      //EXECUTE QUERY
+      const features = new APIFeatures(Tour.find(), req.query).filter().sort().limitFields().paginate();
+
+      const tours = await features.query;
+
+      //SEND RESPONSE
       res.status(200).json({
          status: 'success',
          results: tours.length,
@@ -61,7 +75,7 @@ exports.getAllTours = async (req, res) => {
       } catch(err) {
          res.status(400).json({
             status: 'fail',
-            message: 'Invalid data sent'
+            message: err
          })
       }
         
@@ -92,9 +106,21 @@ exports.getAllTours = async (req, res) => {
           
        }
  
-       exports.deleteTour = (req, res) => {
+       exports.deleteTour = async (req, res) => {
+          try {
+           await Tour.findByIdAndDelete(req.params.id);
+
            res.status(204).json({
-              status: 'patch success',
-              data: null
-           })
+            status: 'delete success',
+            data: null
+         })
+          } catch(err) {
+            res.status(400).json({
+               status: 'fail',
+               message: err
+            })
+          }
+
+
+          
        }
