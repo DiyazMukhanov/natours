@@ -1,5 +1,12 @@
 const Tour = require('../models/tourModel');
 
+exports.aliasTopTours = (req, res, next) => {
+    req.query.limit = '5';
+    req.query.sort = '-ratingsAverage,price';
+    req.query.fields = 'name,price,ratingsAverage,summary,difficulty';
+    next();
+}
+
 exports.getAllTours = async (req, res) => {
     try{
         //BUILD THE QUERY
@@ -50,7 +57,20 @@ exports.getAllTours = async (req, res) => {
         }
 
         //5) PAGINATION
+        // 127.0.0.1:3000/api/v1/tours?page=2&limit=10
+        //Let's code default values for pagination first below
+        const page = req.query.page * 1 || 1;
+        const limit = req.query.limit * 1 || 10;
+        const skip = (page - 1) * limit;
+        query = query.skip(skip).limit(limit); //skip first 10 results and give starting from 11
 
+        if(req.query.page) {
+            const numTours = await Tour.countDocuments();
+            if(skip >= numTours) throw new Error('This page does not exist');
+        }
+
+        //6)
+        //127.0.0.1:3000/api/v1/tours?limit=5&sort=-ratingsAverage,price - getting 5 results and sorting by ratings and price
 
         //EXECUTE THE QUERY
         const tours = await query;
