@@ -14,6 +14,14 @@ const signToken = id => {
 
 const createSendToken = (user, statusCode, res) => {
     const token = signToken(user._id);
+    const cookieOptions = {
+        expires: new Date(Date.now() + process.env.JWT_COOKIE_EXPIRES_IN * 24 * 60 * 60 * 1000), //converted days to miliseconds
+        httpOnly: true, // prevent browser modifying cookies against scripting attacks
+    };
+    if(process.env.NODE_ENV === 'production') cookieOptions.secure = true //will work with https only
+    res.cookie('jwt', token, cookieOptions);
+
+    user.password = undefined; //prevent showing password in the output
 
     res.status(statusCode).json({
         status: 'success',
@@ -70,7 +78,7 @@ exports.protect = catchAsync(async(req, res, next) => {
     }
   // 2)   Verification token
     const decoded = await promisify(jwt.verify)(token, process.env.JWT_SECRET); //verified token
-    // console.log(decoded);
+    console.log('decoded: ', decoded);
   // 3)   Check if user still exists
     const freshUser = await User.findById(decoded.id);
     if(!freshUser) {

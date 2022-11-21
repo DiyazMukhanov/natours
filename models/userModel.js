@@ -40,7 +40,12 @@ const userSchema = new mongoose.Schema({
    },
    passwordChangedAt: Date,
    passwordResetToken: String,
-   passwordResetExpires: Date
+   passwordResetExpires: Date,
+    active: {
+       type: Boolean,
+        default: true,
+        select: false
+    }
 });
 
 //Encrypting the password
@@ -61,6 +66,14 @@ userSchema.pre('save', function(next) {
     if(!this.isModified('password') || this.isNew) return next();
 
     this.passwordChangedAt = Date.now() - 1000; //to ensure that token created after the password changed if DB slow
+    next();
+});
+
+//Not showing deleted Users:
+userSchema.pre(/^find/, function(next) {
+  //this points to the current query
+    this.find({ active: {$ne: false} });
+
     next();
 });
 
