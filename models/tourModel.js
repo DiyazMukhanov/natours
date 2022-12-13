@@ -114,9 +114,13 @@ const tourSchema = new mongoose.Schema({
     toObject: { virtuals: true }
 });
 
+tourSchema.index({price: 1, ratingsAverage: -1}); //1 means ascending order, -1 means descending order. This makes process of searching tours by price much faster. Check by .explain(). Also can add other properties
+tourSchema.index({slug: 1});
+
 tourSchema.virtual('durationWeeks').get(function() {
     return this.duration / 7;
 });
+
 
 // Virtual populate
 tourSchema.virtual('reviews', {
